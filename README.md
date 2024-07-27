@@ -31,3 +31,13 @@ https://www.lightjams.com/artnetominator/artnetominator.msi
 ## jameco fuentes de poder
 
 https://www.jameco.com/z/NEL-400-5-MEAN-WELL-400W-80A-5V-Single-Output-AC-DC-Switching-Power-Supply_2221632.html
+
+## MIDI TESTER
+
+https://hardwaretester.com/midi
+
+
+## INSTRUCCIONES PARA INSTALAR BOARD
+- [ ] Bajar board definitions espressif esp32
+- [ ] escoger board>olimex gateway
+- [ ] escoger board revision f or newer
