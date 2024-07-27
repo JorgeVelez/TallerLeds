@@ -26,3 +26,7 @@ https://www.ableton.com/en/trial/
 ## Monitor Art-Net
 
 https://www.lightjams.com/artnetominator/artnetominator.msi
+
+## jameco fuentes de poder
+
+https://www.jameco.com/z/NEL-400-5-MEAN-WELL-400W-80A-5V-Single-Output-AC-DC-Switching-Power-Supply_2221632.html
