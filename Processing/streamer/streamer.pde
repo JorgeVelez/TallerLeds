@@ -39,11 +39,11 @@ void setup()
 {
   host="127.0.0.1";
   //host="192.168.137.124";
-  //host="192.168.1.77";
+  host="192.168.1.44";
 
   //size(270, 165, P3D);
   size(540, 380);
-  frameRate(40);
+  frameRate(55);
   opc = new OPC(this, host, 7890);
   opc.ledGrid(0, pixelsWidth, pixelsHeight, width/2, height/2-5, 10, 11, 0, true);
 

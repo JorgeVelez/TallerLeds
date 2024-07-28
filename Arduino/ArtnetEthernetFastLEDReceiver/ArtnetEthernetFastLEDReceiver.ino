@@ -55,7 +55,7 @@ const int clockPin = 4;//D5 esp32
 // Art-Net settings
 ArtnetWifi artnet;
 const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
-
+const char host[] = "192.168.1.4";
 
 //timer
 unsigned long DELAY_TIME = 0; // 10 sec
@@ -340,14 +340,16 @@ void setup()
 
   WiFi.onEvent(WiFiEvent);
   ETH.begin();
-  ETH.config(IPAddress(192, 168, 1, 9),IPAddress(192, 168, 1, 1),IPAddress(255, 255, 255, 0),IPAddress(192, 168, 1, 1),IPAddress(192, 168, 1, 1));
+  ETH.config(IPAddress(192, 168, 1, 44),IPAddress(192, 168, 1, 1),IPAddress(255, 255, 255, 0),IPAddress(192, 168, 1, 1),IPAddress(192, 168, 1, 1));
 
 }
 
 void initialize()
 {
   Serial.print("initializing:");
-  artnet.begin();
+  artnet.begin(host);
+  artnet.setLength(3);
+  artnet.setUniverse(startUniverse);
 
   FastLED.addLeds<APA102, 2, clockPin , BGR>(leds, 0, NUM_LEDS_PER_STRIP);
   FastLED.addLeds<APA102, 14, clockPin, BGR>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
@@ -388,6 +390,12 @@ void loop()
     Serial.print(ETH.macAddress());
     Serial.print(", IPv4: ");
     Serial.print(ETH.localIP());
+
+    uint8_t val=222;
+    artnet.setByte(0, val);
+    artnet.setByte(1, val++);
+    artnet.setByte(2, val++);
+    artnet.write();
   }
 
 }

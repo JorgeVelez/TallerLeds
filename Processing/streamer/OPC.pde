@@ -37,8 +37,9 @@ public class OPC
 
 
 
-    artnet = new ArtNetClient(null);
-    artnet.start();
+    artnet = new ArtNetClient();
+
+artnet.start("192.168.1.4");
   }
 
   // Set the location of a single LED
@@ -151,6 +152,11 @@ public class OPC
     if (enableShowLocations) {
       updatePixels();
     }
+    
+    byte[] data = artnet.readDmxData(0, 0);
+    println(data[0] & 0xFF);
+    println(data[1] & 0xFF);
+    println(data[2] & 0xFF);
   }
 
   // Transmit our current buffer of pixel values to the OPC server. This is handled
