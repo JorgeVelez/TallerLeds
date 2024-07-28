@@ -86,29 +86,29 @@ void setup()
   //////////////////////   //UI
   cp5 = new ControlP5(this);
 
-  cp5.addSlider("Brillo")
-    .setPosition(100, 360)
-    .setSize(300, 20)
-    .setRange(100, 255)
-    .setValue(initialBrightness)
-    ;
+  //cp5.addSlider("Brillo")
+  //  .setPosition(100, 360)
+  //  .setSize(300, 20)
+  //  .setRange(100, 255)
+  //  .setValue(initialBrightness)
+  //  ;
     
-      PImage[] imgs = {loadImage("button_a.png"),loadImage("button_a.png"),loadImage("button_a.png")};
+  //    PImage[] imgs = {loadImage("button_a.png"),loadImage("button_a.png"),loadImage("button_a.png")};
 
-      cp5.addButton("next")
-     .setPosition(500,360)
-     .setImages(imgs)
-     .updateSize()
-     ;
-           PImage[] imgsR = {loadImage("button_aR.png"),loadImage("button_aR.png"),loadImage("button_aR.png")};
+  //    cp5.addButton("next")
+  //   .setPosition(500,360)
+  //   .setImages(imgs)
+  //   .updateSize()
+  //   ;
+  //         PImage[] imgsR = {loadImage("button_aR.png"),loadImage("button_aR.png"),loadImage("button_aR.png")};
 
-  cp5.addButton("prev")
-     .setPosition(470,360)
-     .setImages(imgsR)
-     .updateSize()
-     ;
+  //cp5.addButton("prev")
+  //   .setPosition(470,360)
+  //   .setImages(imgsR)
+  //   .updateSize()
+  //   ;
 
-  dot = loadImage("img/capau letras B.png");
+  dot = loadImage("color-dot.png");
 
   /*String[] cameras = Capture.list();
    
@@ -208,13 +208,10 @@ void draw()
   //cam.read();
   // }
 
-tint(tintColor);
-  image(movie, 0, 0, width, height);
+  tint(tintColor);
+  //image(movie, 0, 0, width, height);
   //image(cam, 0, 0);
-
-  //float dotSize = width * 0.3;
-  //image(dot, mouseX - dotSize/2, mouseY - dotSize/2, dotSize, dotSize);
-  //image(dot, 10, 25);
+  
   x = x + thumbSpeed;
   for (int i = 0; i < thumbs.length; i++) {
     image(thumbs[i], - (x + i * thumbSpacing) % thumbStripLength + height , y);
@@ -223,4 +220,7 @@ tint(tintColor);
   text("RFPS:"+opc.remoteFPS, 10, 347);
   text("RPCKS:"+opc.remotePackets, 10, 360);
   text((int)frameRate, 10, 373);
+  
+  fill(255);
+  circle( mouseX, mouseY , 15);
 }

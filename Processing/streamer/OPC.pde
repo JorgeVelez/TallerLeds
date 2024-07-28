@@ -143,7 +143,7 @@ public class OPC
         pixels[pixelLocation] = 0xFFFFFF ^ pixel;
       }
     }
-    dmxData[universeCounter][256] = (byte)(valueToSend);
+    //dmxData[universeCounter][256] = (byte)(valueToSend);
    //println("sending value: "+valueToSend +" to univ "+universeCounter);
   //5184
   //5632
