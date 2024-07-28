@@ -1,0 +1,429 @@
+[1mdiff --git a/Arduino/ArtnetEthernetFastLEDReceiver/ArtnetEthernetFastLEDReceiver.ino b/Arduino/ArtnetEthernetFastLEDReceiver/ArtnetEthernetFastLEDReceiver.ino[m
+[1mindex 7da81e8..6ebf3b1 100644[m
+[1m--- a/Arduino/ArtnetEthernetFastLEDReceiver/ArtnetEthernetFastLEDReceiver.ino[m
+[1m+++ b/Arduino/ArtnetEthernetFastLEDReceiver/ArtnetEthernetFastLEDReceiver.ino[m
+[36m@@ -54,7 +54,7 @@[m [mconst int clockPin = 4;//D5 esp32[m
+ //CRGB leds[numLeds];[m
+ // Art-Net settings[m
+ ArtnetWifi artnet;[m
+[31m-const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.[m
+[32m+[m[32mconst int healthUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.[m
+ const char host[] = "192.168.1.4";[m
+ [m
+ //timer[m
+[36m@@ -349,7 +349,7 @@[m [mvoid initialize()[m
+   Serial.print("initializing:");[m
+   artnet.begin(host);[m
+   artnet.setLength(3);[m
+[31m-  artnet.setUniverse(startUniverse);[m
+[32m+[m[32m  artnet.setUniverse(healthUniverse);[m
+ [m
+   FastLED.addLeds<APA102, 2, clockPin , BGR>(leds, 0, NUM_LEDS_PER_STRIP);[m
+   FastLED.addLeds<APA102, 14, clockPin, BGR>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);[m
+[36m@@ -383,19 +383,20 @@[m [mvoid loop()[m
+     Serial.print(frameCounter);[m
+     Serial.print("packets: ");[m
+     Serial.println(packetCounter);[m
+[31m-    frameCounter = 0;[m
+[31m-    packetCounter = 0;[m
+[32m+[m[41m    [m
+ [m
+     Serial.print("ETH MAC: ");[m
+     Serial.print(ETH.macAddress());[m
+     Serial.print(", IPv4: ");[m
+     Serial.print(ETH.localIP());[m
+ [m
+[31m-    uint8_t val=222;[m
+[31m-    artnet.setByte(0, val);[m
+[31m-    artnet.setByte(1, val++);[m
+[31m-    artnet.setByte(2, val++);[m
+[32m+[m[32m    artnet.setByte(0, 0);[m
+[32m+[m[32m    artnet.setByte(1, frameCounter);[m
+[32m+[m[32m    artnet.setByte(2, (byte) (packetCounter & 0xFF));[m
+[32m+[m[32m    artnet.setByte(3, (byte) ((packetCounter>>8) & 0xFF));[m
+     artnet.write();[m
+[32m+[m[32m    frameCounter = 0;[m
+[32m+[m[32m    packetCounter = 0;[m
+   }[m
+ [m
+ }[m
+[1mdiff --git a/Processing/midi2artnet/midi2artnet.pde b/Processing/midi2artnet/midi2artnet.pde[m
+[1mdeleted file mode 100644[m
+[1mindex 2457e02..0000000[m
+[1m--- a/Processing/midi2artnet/midi2artnet.pde[m
+[1m+++ /dev/null[m
+[36m@@ -1,191 +0,0 @@[m
+[31m-import themidibus.*; //Import the library[m
+[31m-import ch.bildspur.artnet.*;[m
+[31m-import processing.serial.*;[m
+[31m-[m
+[31m-Serial myPort;  // Create object from Serial class[m
+[31m-int val;   [m
+[31m-ArtNetClient artnet;[m
+[31m-byte[] dmxData = new byte[512];[m
+[31m-MidiBus myBus; // The MidiBus[m
+[31m-[m
+[31m-  float averageValue =0;[m
+[31m-  color circleColor;[m
+[31m-  String ip="192.168.1.125";[m
+[31m-void setup() {[m
+[31m-  size(400, 400);[m
+[31m-  background(0);[m
+[31m-  [m
+[31m-  //frameRate(200);[m
+[31m-  [m
+[31m-  colorMode(HSB, 360, 100, 100);[m
+[31m-  textAlign(CENTER, CENTER);[m
+[31m-  textSize(20);[m
+[31m-[m
+[31m-  MidiBus.list(); // List all available Midi devices on STDOUT. This will show each device's index and name.[m
+[31m-  myBus = new MidiBus(this, 0, 3); // Create a new MidiBus with no input device and the default Java Sound Synthesizer as the output device.[m
+[31m-[m
+[31m-  // create artnet client without buffer (no receving needed)[m
+[31m-  artnet = new ArtNetClient(null);[m
+[31m-  artnet.start();[m
+[31m-  [m
+[31m-  //String portName = Serial.list()[0];[m
+[31m-   //println(Serial.list());[m
+[31m-  //myPort = new Serial(this, portName, 9600);[m
+[31m-  [m
+[31m-   for (int i = 0; i < dmxData.length; i++) {[m
+[31m-    dmxData[i] = byte(random(128)); [m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-void draw() {[m
+[31m-  //println("Sending");[m
+[31m-  //int channel = 0;[m
+[31m-  //int pitch = 64;[m
+[31m-  //int velocity = 127;[m
+[31m-[m
+[31m-  //myBus.sendNoteOn(channel, pitch, velocity); // Send a Midi noteOn[m
+[31m-  //delay(200);[m
+[31m-  //myBus.sendNoteOff(channel, pitch, velocity); // Send a Midi nodeOff[m
+[31m-[m
+[31m-  //int number = 0;[m
+[31m-  //int value = 90;[m
+[31m-[m
+[31m-  //myBus.sendControllerChange(channel, number, value); // Send a controllerChange[m
+[31m-  //delay(2000);[m
+[31m-  [m
+[31m-  //if ( myPort.available() > 0) {  // If data is available,[m
+[31m-  //  val = myPort.read();         // read it and store it in val[m
+[31m-  //    println("val:"+val);[m
+[31m-[m
+[31m-  //}[m
+[31m-  [m
+[31m-   background(0,255, 0, 5);[m
+[31m-  [m
+[31m-[m
+[31m-  [m
+[31m-  // Map the mean value onto the radius of the circle[m
+[31m-  float circleRadius = map(averageValue, 0, 1.0, 0, 40);[m
+[31m-  [m
+[31m-  [m
+[31m-  circleColor = color(0, 408, 612, 816);[m
+[31m-  [m
+[31m-  // create a loop between the colors[m
+[31m-  if (averageValue > 10) {[m
+[31m-    //circleColor = lerpColor(verde, blu, averageValue);[m
+[31m-  }[m
+[31m-  if (averageValue > 40) {[m
+[31m-    //circleColor = lerpColor(blu, rosso, averageValue);[m
+[31m-  }[m
+[31m-  [m
+[31m-  [m
+[31m-  noStroke();[m
+[31m-  fill(circleColor);[m
+[31m-[m
+[31m-  //ellipse(random(windowWidth), random(windowHeight), circleRadius, circleRadius);[m
+[31m-  ellipse(20, 20, circleRadius, circleRadius);[m
+[31m-  [m
+[31m-  fill(255);[m
+[31m-  textSize(15);[m
+[31m-  text(ip, 60, 40); [m
+[31m-  [m
+[31m-averageValue -=.1;[m
+[31m-if(averageValue<0)[m
+[31m-averageValue=0;[m
+[31m-[m
+[31m-if (mousePressed == true) {[m
+[31m-    [m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 0, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 1, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 2, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 4, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 4, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 6, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 7, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 8, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 9, dmxData);[m
+[31m-  artnet.unicastDmx("192.168.1.9", 0, 10, dmxData);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-void noteOn(int channel, int pitch, int velocity) {[m
+[31m-  // Receive a noteOn[m
+[31m-  println();[m
+[31m-  println("Note On:");[m
+[31m-  println("--------");[m
+[31m-  println("Channel:"+channel);[m
+[31m-  println("Pitch:"+pitch);[m
+[31m-  println("Velocity:"+velocity);[m
+[31m-  [m
+[31m-   // create color[m
+[31m-  int c = color(frameCount % 360, 80, 100);[m
+[31m-[m
+[31m-  background(c);[m
+[31m-[m
+[31m-  // fill dmx array[m
+[31m-  dmxData[0] = (byte) 1;[m
+[31m-  dmxData[1] = (byte) pitch;[m
+[31m-  dmxData[2] = (byte) velocity;[m
+[31m-[m
+[31m-  // send dmx to localhost[m
+[31m-artnet.unicastDmx("192.168.1.125", 0, 0, dmxData);[m
+[31m-artnet.unicastDmx("192.168.1.125", 0, 0, dmxData);[m
+[31m-artnet.unicastDmx("192.168.1.125", 0, 0, dmxData);[m
+[31m-artnet.unicastDmx("192.168.1.125", 0, 0, dmxData);[m
+[31m-artnet.unicastDmx("192.168.1.125", 0, 0, dmxData);[m
+[31m-artnet.unicastDmx("192.168.1.125", 0, 0, dmxData);[m
+[31m-  // show values[m
+[31m-  text("R: " + (int)red(c) + " Green: " + (int)green(c) + " Blue: " + (int)blue(c), width / 2, height / 2);[m
+[31m-[m
+[31m-//myPort.write((byte) 1); [m
+[31m-//myPort.write((byte) pitch); [m
+[31m-//myPort.write((byte) velocity); [m
+[31m-//myPort.write('\n'); [m
+[31m-//myPort.write((byte) velocity); [m
+[31m-averageValue =1;[m
+[31m-}[m
+[31m-[m
+[31m-void noteOff(int channel, int pitch, int velocity) {[m
+[31m-  // Receive a noteOff[m
+[31m-  println();[m
+[31m-  println("Note Off:");[m
+[31m-  println("--------");[m
+[31m-  println("Channel:"+channel);[m
+[31m-  println("Pitch:"+pitch);[m
+[31m-  println("Velocity:"+velocity);[m
+[31m-  [m
+[31m-    // create color[m
+[31m-  int c = color(frameCount % 360, 80, 100);[m
+[31m-[m
+[31m-  background(c);[m
+[31m-[m
+[31m-  // fill dmx array[m
+[31m-  dmxData[0] = (byte) 0;[m
+[31m-  dmxData[1] = (byte) pitch;[m
+[31m-  dmxData[2] = (byte) velocity;[m
+[31m-[m
+[31m-  // send dmx to localhost[m
+[31m-  //artnet.unicastDmx("127.0.0.1", 0, 0, dmxData);[m
+[31m-  artnet.unicastDmx(ip, 0, 0, dmxData);[m
+[31m-  // show values[m
+[31m-  text("R: " + (int)red(c) + " Green: " + (int)green(c) + " Blue: " + (int)blue(c), width / 2, height / 2);[m
+[31m-[m
+[31m-//myPort.write((byte) 0); [m
+[31m-//myPort.write((byte) pitch); [m
+[31m-//myPort.write((byte) velocity); [m
+[31m-//myPort.write('\n');  [m
+[31m-}[m
+[31m-[m
+[31m-void controllerChange(int channel, int number, int value) {[m
+[31m-  // Receive a controllerChange[m
+[31m-  println();[m
+[31m-  println("Controller Change:");[m
+[31m-  println("--------");[m
+[31m-  println("Channel:"+channel);[m
+[31m-  println("Number:"+number);[m
+[31m-  println("Value:"+value);[m
+[31m-}[m
+[31m-[m
+[31m-void delay(int time) {[m
+[31m-  int current = millis();[m
+[31m-  while (millis () < current+time) Thread.yield();[m
+[31m-}[m
+[1mdiff --git a/Processing/streamer/OPC.pde b/Processing/streamer/OPC.pde[m
+[1mindex bf0b1d6..7de697d 100644[m
+[1m--- a/Processing/streamer/OPC.pde[m
+[1m+++ b/Processing/streamer/OPC.pde[m
+[36m@@ -16,6 +16,7 @@[m [mpublic class OPC[m
+   byte[][] dmxData;[m
+ [m
+   String host;[m
+[32m+[m[32m  String localInterface;[m
+   int port;[m
+ [m
+   int[] pixelLocations;[m
+[36m@@ -26,20 +27,20 @@[m [mpublic class OPC[m
+ [m
+   int numUniverses;[m
+   [m
+[32m+[m[32m  int remoteFPS;[m
+[32m+[m[32m  int remotePackets;[m
+   int valueToSend;[m
+ [m
+[31m-  OPC(PApplet parent, String host, int port)[m
+[32m+[m[32m  OPC(PApplet parent, String host,String localInterface, int port)[m
+   {[m
+     this.host = host;[m
+     this.port = port;[m
+[32m+[m[32m    this.localInterface = localInterface;[m
+     this.enableShowLocations = true;[m
+     parent.registerMethod("draw", this);[m
+ [m
+[31m-[m
+[31m-[m
+     artnet = new ArtNetClient();[m
+[31m-[m
+[31m-artnet.start("192.168.1.4");[m
+[32m+[m[32m    artnet.start(localInterface);[m
+   }[m
+ [m
+   // Set the location of a single LED[m
+[36m@@ -154,9 +155,9 @@[m [martnet.start("192.168.1.4");[m
+     }[m
+     [m
+     byte[] data = artnet.readDmxData(0, 0);[m
+[31m-    println(data[0] & 0xFF);[m
+[31m-    println(data[1] & 0xFF);[m
+[31m-    println(data[2] & 0xFF);[m
+[32m+[m[32m    remoteFPS=(data[1] & 0xFF);[m
+[32m+[m[32m    remotePackets=((data[3] << 8) + data[2]);[m
+[32m+[m[41m   [m
+   }[m
+ [m
+   // Transmit our current buffer of pixel values to the OPC server. This is handled[m
+[1mdiff --git a/Processing/streamer/streamer.pde b/Processing/streamer/streamer.pde[m
+[1mindex 3c72d6d..215640f 100644[m
+[1m--- a/Processing/streamer/streamer.pde[m
+[1m+++ b/Processing/streamer/streamer.pde[m
+[36m@@ -1,10 +1,13 @@[m
+ import processing.video.*;[m
+ import controlP5.*;[m
+[32m+[m[32mimport themidibus.*;[m
+ import java.io.FilenameFilter;[m
+[32m+[m[32mimport java.net.InetAddress;[m
+[32m+[m[32mimport java.net.UnknownHostException;[m
+ [m
+ OPC opc;[m
+ PImage dot;[m
+[31m-[m
+[32m+[m[32mMidiBus myBus;[m
+ //////////////////IMAGES[m
+ [m
+ PImage[] thumbs;[m
+[36m@@ -28,6 +31,7 @@[m [mint pixelsWidth=54;[m
+ int pixelsHeight=28;[m
+ [m
+ String host="192.168.1.79";[m
+[32m+[m[32mString localInterface="192.168.1.4";[m
+ [m
+ Capture cam;[m
+ [m
+[36m@@ -35,19 +39,21 @@[m [mControlP5 cp5;[m
+ [m
+ int initialBrightness=200;[m
+ [m
+[31m-void setup()[m
+[31m-{[m
+[31m-  host="127.0.0.1";[m
+[31m-  //host="192.168.137.124";[m
+[31m-  host="192.168.1.44";[m
+[32m+[m[32mcolor tintColor=#FFFFFF;[m
+ [m
+[32m+[m[32mvoid setup()[m
+[32m+[m[32m{[m[41m [m
+   //size(270, 165, P3D);[m
+   size(540, 380);[m
+   frameRate(55);[m
+[31m-  opc = new OPC(this, host, 7890);[m
+[32m+[m[32m  opc = new OPC(this, host, localInterface, 7890);[m
+   opc.ledGrid(0, pixelsWidth, pixelsHeight, width/2, height/2-5, 10, 11, 0, true);[m
+ [m
+   opc.valueToSend=initialBrightness;[m
+[32m+[m[41m  [m
+[32m+[m[32m  ///////////////////////MIDI[m
+[32m+[m[32m   MidiBus.list();[m[41m [m
+[32m+[m[32m   myBus = new MidiBus(this, "loopMIDI Port", 0);[m
+ [m
+   ///////////////////////MOVIES[m
+ [m
+[36m@@ -87,14 +93,14 @@[m [mvoid setup()[m
+     .setValue(initialBrightness)[m
+     ;[m
+     [m
+[31m-      PImage[] imgs = {loadImage("button_a.png"),loadImage("button_b.png"),loadImage("button_c.png")};[m
+[32m+[m[32m      PImage[] imgs = {loadImage("button_a.png"),loadImage("button_a.png"),loadImage("button_a.png")};[m
+ [m
+       cp5.addButton("next")[m
+      .setPosition(500,360)[m
+      .setImages(imgs)[m
+      .updateSize()[m
+      ;[m
+[31m-           PImage[] imgsR = {loadImage("button_aR.png"),loadImage("button_b.png"),loadImage("button_c.png")};[m
+[32m+[m[32m           PImage[] imgsR = {loadImage("button_aR.png"),loadImage("button_aR.png"),loadImage("button_aR.png")};[m
+ [m
+   cp5.addButton("prev")[m
+      .setPosition(470,360)[m
+[36m@@ -158,6 +164,42 @@[m [mString[] loadFilenames(String path, String ext) {[m
+   return folder.list(filenameFilter);[m
+ }[m
+ [m
+[32m+[m
+[32m+[m[32mvoid noteOn(int channel, int pitch, int velocity) {[m
+[32m+[m[32m  // Receive a noteOn[m
+[32m+[m[32m  println();[m
+[32m+[m[32m  println("Note On:");[m
+[32m+[m[32m  println("--------");[m
+[32m+[m[32m  println("Channel:"+channel);[m
+[32m+[m[32m  println("Pitch:"+pitch);[m
+[32m+[m[32m  println("Velocity:"+velocity);[m
+[32m+[m[41m  [m
+[32m+[m[32m  colorMode(HSB, 255);[m
+[32m+[m[32m  tintColor = color(pitch, 255, 255);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid noteOff(int channel, int pitch, int velocity) {[m
+[32m+[m[32m  // Receive a noteOff[m
+[32m+[m[32m  println();[m
+[32m+[m[32m  println("Note Off:");[m
+[32m+[m[32m  println("--------");[m
+[32m+[m[32m  println("Channel:"+channel);[m
+[32m+[m[32m  println("Pitch:"+pitch);[m
+[32m+[m[32m  println("Velocity:"+velocity);[m
+[32m+[m[41m  [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mvoid controllerChange(int channel, int number, int value) {[m
+[32m+[m[32m  // Receive a controllerChange[m
+[32m+[m[32m  println();[m
+[32m+[m[32m  println("Controller Change:");[m
+[32m+[m[32m  println("--------");[m
+[32m+[m[32m  println("Channel:"+channel);[m
+[32m+[m[32m  println("Number:"+number);[m
+[32m+[m[32m  println("Value:"+value);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m
+ void draw()[m
+ {[m
+   background(0);[m
+[36m@@ -166,6 +208,7 @@[m [mvoid draw()[m
+   //cam.read();[m
+   // }[m
+ [m
+[32m+[m[32mtint(tintColor);[m
+   image(movie, 0, 0, width, height);[m
+   //image(cam, 0, 0);[m
+ [m
+[36m@@ -177,5 +220,7 @@[m [mvoid draw()[m
+     image(thumbs[i], - (x + i * thumbSpacing) % thumbStripLength + height , y);[m
+   }[m
+ [m
+[31m-  text(frameRate, 10, 373);[m
+[32m+[m[32m  text("RFPS:"+opc.remoteFPS, 10, 347);[m
+[32m+[m[32m  text("RPCKS:"+opc.remotePackets, 10, 360);[m
+[32m+[m[32m  text((int)frameRate, 10, 373);[m
+ }[m

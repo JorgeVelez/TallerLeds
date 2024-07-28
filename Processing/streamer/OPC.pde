@@ -16,6 +16,7 @@ public class OPC
   byte[][] dmxData;
 
   String host;
+  String localInterface;
   int port;
 
   int[] pixelLocations;
@@ -26,20 +27,20 @@ public class OPC
 
   int numUniverses;
   
+  int remoteFPS;
+  int remotePackets;
   int valueToSend;
 
-  OPC(PApplet parent, String host, int port)
+  OPC(PApplet parent, String host,String localInterface, int port)
   {
     this.host = host;
     this.port = port;
+    this.localInterface = localInterface;
     this.enableShowLocations = true;
     parent.registerMethod("draw", this);
 
-
-
     artnet = new ArtNetClient();
-
-artnet.start("192.168.1.4");
+    artnet.start(localInterface);
   }
 
   // Set the location of a single LED
@@ -154,9 +155,9 @@ artnet.start("192.168.1.4");
     }
     
     byte[] data = artnet.readDmxData(0, 0);
-    println(data[0] & 0xFF);
-    println(data[1] & 0xFF);
-    println(data[2] & 0xFF);
+    remoteFPS=(data[1] & 0xFF);
+    remotePackets=((data[3] << 8) + data[2]);
+   
   }
 
   // Transmit our current buffer of pixel values to the OPC server. This is handled

@@ -54,7 +54,7 @@ const int clockPin = 4;//D5 esp32
 //CRGB leds[numLeds];
 // Art-Net settings
 ArtnetWifi artnet;
-const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
+const int healthUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
 const char host[] = "192.168.1.4";
 
 //timer
@@ -349,7 +349,7 @@ void initialize()
   Serial.print("initializing:");
   artnet.begin(host);
   artnet.setLength(3);
-  artnet.setUniverse(startUniverse);
+  artnet.setUniverse(healthUniverse);
 
   FastLED.addLeds<APA102, 2, clockPin , BGR>(leds, 0, NUM_LEDS_PER_STRIP);
   FastLED.addLeds<APA102, 14, clockPin, BGR>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
@@ -383,19 +383,20 @@ void loop()
     Serial.print(frameCounter);
     Serial.print("packets: ");
     Serial.println(packetCounter);
-    frameCounter = 0;
-    packetCounter = 0;
+    
 
     Serial.print("ETH MAC: ");
     Serial.print(ETH.macAddress());
     Serial.print(", IPv4: ");
     Serial.print(ETH.localIP());
 
-    uint8_t val=222;
-    artnet.setByte(0, val);
-    artnet.setByte(1, val++);
-    artnet.setByte(2, val++);
+    artnet.setByte(0, 0);
+    artnet.setByte(1, frameCounter);
+    artnet.setByte(2, (byte) (packetCounter & 0xFF));
+    artnet.setByte(3, (byte) ((packetCounter>>8) & 0xFF));
     artnet.write();
+    frameCounter = 0;
+    packetCounter = 0;
   }
 
 }

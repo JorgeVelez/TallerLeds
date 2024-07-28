@@ -1,10 +1,13 @@
 import processing.video.*;
 import controlP5.*;
+import themidibus.*;
 import java.io.FilenameFilter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 OPC opc;
 PImage dot;
-
+MidiBus myBus;
 //////////////////IMAGES
 
 PImage[] thumbs;
@@ -27,7 +30,8 @@ int movieIndex=0;
 int pixelsWidth=54;
 int pixelsHeight=28;
 
-String host="192.168.1.79";
+String host="192.168.1.44";
+String localInterface="192.168.1.4";
 
 Capture cam;
 
@@ -35,19 +39,21 @@ ControlP5 cp5;
 
 int initialBrightness=200;
 
-void setup()
-{
-  host="127.0.0.1";
-  //host="192.168.137.124";
-  host="192.168.1.44";
+color tintColor=#FFFFFF;
 
+void setup()
+{ 
   //size(270, 165, P3D);
   size(540, 380);
   frameRate(55);
-  opc = new OPC(this, host, 7890);
+  opc = new OPC(this, host, localInterface, 7890);
   opc.ledGrid(0, pixelsWidth, pixelsHeight, width/2, height/2-5, 10, 11, 0, true);
 
   opc.valueToSend=initialBrightness;
+  
+  ///////////////////////MIDI
+   MidiBus.list(); 
+   myBus = new MidiBus(this, "loopMIDI Port", 0);
 
   ///////////////////////MOVIES
 
@@ -87,14 +93,14 @@ void setup()
     .setValue(initialBrightness)
     ;
     
-      PImage[] imgs = {loadImage("button_a.png"),loadImage("button_b.png"),loadImage("button_c.png")};
+      PImage[] imgs = {loadImage("button_a.png"),loadImage("button_a.png"),loadImage("button_a.png")};
 
       cp5.addButton("next")
      .setPosition(500,360)
      .setImages(imgs)
      .updateSize()
      ;
-           PImage[] imgsR = {loadImage("button_aR.png"),loadImage("button_b.png"),loadImage("button_c.png")};
+           PImage[] imgsR = {loadImage("button_aR.png"),loadImage("button_aR.png"),loadImage("button_aR.png")};
 
   cp5.addButton("prev")
      .setPosition(470,360)
@@ -158,6 +164,42 @@ String[] loadFilenames(String path, String ext) {
   return folder.list(filenameFilter);
 }
 
+
+void noteOn(int channel, int pitch, int velocity) {
+  // Receive a noteOn
+  println();
+  println("Note On:");
+  println("--------");
+  println("Channel:"+channel);
+  println("Pitch:"+pitch);
+  println("Velocity:"+velocity);
+  
+  colorMode(HSB, 255);
+  tintColor = color(pitch, 255, 255);
+}
+
+void noteOff(int channel, int pitch, int velocity) {
+  // Receive a noteOff
+  println();
+  println("Note Off:");
+  println("--------");
+  println("Channel:"+channel);
+  println("Pitch:"+pitch);
+  println("Velocity:"+velocity);
+  
+}
+
+void controllerChange(int channel, int number, int value) {
+  // Receive a controllerChange
+  println();
+  println("Controller Change:");
+  println("--------");
+  println("Channel:"+channel);
+  println("Number:"+number);
+  println("Value:"+value);
+}
+
+
 void draw()
 {
   background(0);
@@ -166,6 +208,7 @@ void draw()
   //cam.read();
   // }
 
+tint(tintColor);
   image(movie, 0, 0, width, height);
   //image(cam, 0, 0);
 
@@ -177,5 +220,7 @@ void draw()
     image(thumbs[i], - (x + i * thumbSpacing) % thumbStripLength + height , y);
   }
 
-  text(frameRate, 10, 373);
+  text("RFPS:"+opc.remoteFPS, 10, 347);
+  text("RPCKS:"+opc.remotePackets, 10, 360);
+  text((int)frameRate, 10, 373);
 }
