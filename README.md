@@ -41,3 +41,8 @@ https://hardwaretester.com/midi
 - [ ] Bajar board definitions espressif esp32
 - [ ] escoger board>olimex gateway
 - [ ] escoger board revision f or newer
+
+
+## INSTRUCCIONES PARA CONFIGURAR TD
+- [ ] Dialogs>Midi Device Mapper - DAR DE ALTA LOOPMIDI
+- [ ] En nodo dmxout cambiar la ip del controlador
