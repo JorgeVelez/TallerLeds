@@ -71,7 +71,7 @@ bool sendFrame = 1;
 int previousDataLength = 0;
 
 #define NUM_STRIPS 8
-#define NUM_LEDS_PER_STRIP 216
+#define NUM_LEDS_PER_STRIP 180
 #define NUM_LEDS NUM_LEDS_PER_STRIP * NUM_STRIPS
 
 CRGB leds[NUM_LEDS];

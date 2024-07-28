@@ -27,7 +27,7 @@ String[] movieFilenames;
 int movieIndex=0;
 
 
-int pixelsWidth=54;
+int pixelsWidth=60;
 int pixelsHeight=28;
 
 String host="192.168.1.44";
@@ -47,7 +47,7 @@ void setup()
   size(540, 380);
   frameRate(55);
   opc = new OPC(this, host, localInterface, 7890);
-  opc.ledGrid(0, pixelsWidth, pixelsHeight, width/2, height/2-5, 10, 11, 0, true);
+  opc.ledGrid(0, pixelsWidth, pixelsHeight, width/2, height/2-5, 9, 11, 0, true);
 
   opc.valueToSend=initialBrightness;
   
@@ -209,7 +209,7 @@ void draw()
   // }
 
   tint(tintColor);
-  //image(movie, 0, 0, width, height);
+  image(movie, 0, 0, width, height);
   //image(cam, 0, 0);
   
   x = x + thumbSpeed;
