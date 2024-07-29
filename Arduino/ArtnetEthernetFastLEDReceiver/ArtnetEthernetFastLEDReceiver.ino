@@ -6,6 +6,24 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <ETH.h>
+#include <ESPAsyncWebServer.h>
+#include <ESPDMX.h>
+
+DMXESPSerial dmx;
+AsyncWebServer server(80);
+
+const char* PARAM_MESSAGE = "channel";
+const char* PARAM_MESSAGE2 = "value";
+
+String value;
+String channel;
+
+uint32_t interval = 1000/22;
+uint32_t now=0;
+
+void notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
+}
 
 static bool eth_connected = false;
 static bool artnet_connected = false;
@@ -340,16 +358,17 @@ void setup()
 
   WiFi.onEvent(WiFiEvent);
   ETH.begin();
-  ETH.config(IPAddress(192, 168, 1, 44),IPAddress(192, 168, 1, 1),IPAddress(255, 255, 255, 0),IPAddress(192, 168, 1, 1),IPAddress(192, 168, 1, 1));
+  ETH.config(IPAddress(192, 168, 1, 100  ),IPAddress(192, 168, 1, 1),IPAddress(255, 255, 255, 0),IPAddress(192, 168, 1, 1),IPAddress(192, 168, 1, 1));
 
 }
 
 void initialize()
 {
   Serial.print("initializing:");
-  artnet.begin(host);
-  artnet.setLength(3);
-  artnet.setUniverse(healthUniverse);
+  artnet.begin();
+//  artnet.begin(host);
+//  artnet.setLength(3);
+//  artnet.setUniverse(healthUniverse);
 
   FastLED.addLeds<APA102, 2, clockPin , BGR>(leds, 0, NUM_LEDS_PER_STRIP);
   FastLED.addLeds<APA102, 14, clockPin, BGR>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
@@ -370,6 +389,43 @@ void initialize()
   Serial.print("universes:");
   Serial.println(maxUniverses);
   artnet_connected = true;
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(200, "text/plain", "Hello, world");
+  });
+
+  // Send a GET request to <IP>/get?message=<message>
+  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+      
+      if (request->hasParam(PARAM_MESSAGE)) {
+          channel = request->getParam(PARAM_MESSAGE)->value();
+      } else {
+          channel = "No channel sent";
+      }
+
+      if (request->hasParam(PARAM_MESSAGE2)) {
+          value = request->getParam(PARAM_MESSAGE2)->value();
+      } else {
+          value = "No value sent";
+      }
+       
+      request->send(200, "text/plain", "Hello, GET: " + channel +":"+value);
+  });
+
+  // Send a POST request to <IP>/post with a form field message set to <message>
+  server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request){
+      String message;
+      if (request->hasParam(PARAM_MESSAGE, true)) {
+          message = request->getParam(PARAM_MESSAGE, true)->value();
+      } else {
+          message = "No message sent";
+      }
+      request->send(200, "text/plain", "Hello, POST: " + message);
+  });
+
+  server.onNotFound(notFound);
+
+  server.begin();
 }
 
 void loop()
@@ -390,13 +446,21 @@ void loop()
     Serial.print(", IPv4: ");
     Serial.print(ETH.localIP());
 
-    artnet.setByte(0, 0);
-    artnet.setByte(1, frameCounter);
-    artnet.setByte(2, (byte) (packetCounter & 0xFF));
-    artnet.setByte(3, (byte) ((packetCounter>>8) & 0xFF));
-    artnet.write();
-    frameCounter = 0;
-    packetCounter = 0;
+//    artnet.setByte(0, 0);
+//    artnet.setByte(1, frameCounter);
+//    artnet.setByte(2, (byte) (packetCounter & 0xFF));
+//    artnet.setByte(3, (byte) ((packetCounter>>8) & 0xFF));
+//    artnet.write();
+//    frameCounter = 0;
+//    packetCounter = 0;
+  }
+
+  if (millis() - now >= interval)
+  {
+    now=millis();
+     dmx.write(channel.toInt(), value.toInt());
+    dmx.write(7, 255);
+    dmx.update();
   }
 
 }
