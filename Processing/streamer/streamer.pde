@@ -30,7 +30,7 @@ int movieIndex=0;
 int pixelsWidth=60;
 int pixelsHeight=28;
 
-String host="192.168.1.44";
+String host="192.168.1.100";
 String localInterface="192.168.1.4";
 
 Capture cam;

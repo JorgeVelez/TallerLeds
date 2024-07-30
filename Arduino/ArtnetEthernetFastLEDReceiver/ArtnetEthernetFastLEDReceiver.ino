@@ -1,7 +1,3 @@
-/*
-   x universos a 30fps
-*/
-
 #include <ArtnetWifi.h>
 #include <Arduino.h>
 #include <AsyncTCP.h>
@@ -18,37 +14,10 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 //////////////////////////// webserver
-
 #define isDebug false
 
-
-const char* PARAM_RELAYA = "relaya";
-const char* PARAM_RELAYB = "relayb";
-
-const char* PARAM_AVANZA = "avanza";
-const char* PARAM_PARAR = "parar";
 const char* PARAM_CALIBRA = "calibra";
-const char* PARAM_RUTINA = "rutina";
 const char* PARAM_VELMAS = "velmas";
-const char* PARAM_VELMENOS = "velmenos";
-
-
-const int SensorComienzo = 23;
-const int SensorFinal = 21;
-
-const int Relay1 = 32;
-const int Relay2 = 33;
-
-int PosicionFinal = 0;
-int PosicionInicial = 0;
-
-bool estaEnInicio = false;
-
-int velocidadSecuencia = 900;
-int aceleracionSecuencia = 4000;
-
-int velocidadCalibrar = 500;
-int aceleracionCalibrar = 4000;
 
 int state;
 const int CalibrateStart = 1;
@@ -61,16 +30,13 @@ const int Rutina = 6;
 const int Iddle = -1;
 int velocidad = 6;
 
-unsigned long StartTime = 0;
 
 
 /////////////////////////////EEPROM////////////////////////////
 int addressVelocity = 0;
 #define EEPROM_SIZE 64
 
-
 //////////////////////////////////////////////////////
-
 bool ledState = 0;
 const int ledPin = 2;
 
@@ -175,7 +141,7 @@ const char index_html[] PROGMEM = R"rawliteral(
      font-weight: bold;
    }
   </style>
-<title>Plataforma 180</title>
+<title>Controlador Art-Net</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
 </head>
@@ -186,40 +152,26 @@ const char index_html[] PROGMEM = R"rawliteral(
   <div class="content">
     <div>
       <p class="state" style="display:none" id="textoCalibrando">Calibrando...</p>
-      <p><button  id="buttonU" class="buttonA">RUTINA</button></p>
       <p class="state"  id="textoVel">Velocidad: <span  id="state">%VEL%s</span></p>
       <p><button  id="buttonVmas" class="buttonV">+</button></p>
-      <p><button  id="buttonVmenos" class="buttonV">-</button></p>
-      <p><button id="buttonA" class="buttonA">CAMBIO LADO</button></p>
-      <p><button  id="buttonP" class="buttonP">PARAR</button></p>
-      <p><button  id="buttonS1" class="buttonS">SWITCH1</button></p>
-      <p><button  id="buttonS2" class="buttonS">SWITCH2</button></p>
       <p><button id="buttonC" class="buttonC">CALIBRAR</button></p>
 
     </div>
   </div>
 <script>
-
-var PARAM_RELAYA = "relaya";
-var PARAM_RELAYB = "relayb";
-
-var PARAM_AVANZA = "avanza";
-var PARAM_PARAR = "parar";
+ 
 var PARAM_CALIBRA = "calibra";
-
-var PARAM_RUTINA = "rutina";
 var PARAM_VELMAS = "velmas";
-var PARAM_VELMENOS = "velmenos";
 
  var gateway = `ws://${window.location.hostname}/ws`;
   var websocket;
-  window.addEventListener('load', onLoad);
+  window.addEventListener('load', onLoad);///////////////////////////
   function initWebSocket() {
     console.log('Trying to open a WebSocket connection...');
     websocket = new WebSocket(gateway);
     websocket.onopen    = onOpen;
     websocket.onclose   = onClose;
-    websocket.onmessage = onMessage; // <-- add this line
+    websocket.onmessage = onMessage; 
   }
   function onOpen(event) {
     console.log('Connection opened');
@@ -231,13 +183,6 @@ var PARAM_VELMENOS = "velmenos";
   function onMessage(event) {
     var state;
     if (event.data == "calibrado"){
-      
-     document.getElementById('buttonA').style.display = 'inline';
-     document.getElementById('buttonP').style.display = 'inline';
-    document.getElementById('buttonU').style.display = 'inline';
-    document.getElementById('buttonS1').style.display = 'inline';
-    document.getElementById('buttonS2').style.display = 'inline';
-    document.getElementById('buttonVmenos').style.display = 'inline';
     document.getElementById('buttonVmas').style.display = 'inline';
     document.getElementById('textoVel').style.display = 'inline';
      document.getElementById('textoCalibrando').style.display = 'none';
@@ -254,17 +199,11 @@ var PARAM_VELMENOS = "velmenos";
   }
   function initButtonS() {
     document.getElementById('buttonC').addEventListener('click', () => { buttonHandler(PARAM_CALIBRA) });
-    document.getElementById('buttonA').addEventListener('click', () => { buttonHandler(PARAM_AVANZA) });
-    document.getElementById('buttonP').addEventListener('click', () => { buttonHandler(PARAM_PARAR) });
-    document.getElementById('buttonU').addEventListener('click', () => { buttonHandler(PARAM_RUTINA) });
-    document.getElementById('buttonS1').addEventListener('click', () => { buttonHandler(PARAM_RELAYA) });
-    document.getElementById('buttonS2').addEventListener('click', () => { buttonHandler(PARAM_RELAYB) });
     document.getElementById('buttonVmas').addEventListener('click', () => { buttonHandler(PARAM_VELMAS) });
-    document.getElementById('buttonVmenos').addEventListener('click', () => { buttonHandler(PARAM_VELMENOS) });
   }
+  
   function buttonHandler(msg){
     websocket.send(msg);
-
     if(msg==PARAM_CALIBRA){
       document.getElementById('buttonC').style.display = 'none';
       document.getElementById('textoCalibrando').style.display = 'inline';
@@ -280,43 +219,18 @@ void notifyClients(String msg) {
   ws.textAll(msg);
 }
 
-
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    //aqui notificas y haces cambio de hardware
-    if (strcmp((char*)data, PARAM_AVANZA) == 0) {
-      state= Moviendo;
-      if(!estaEnInicio){
-        estaEnInicio=true;
-        MueveAPosInicial();
-      }else{
-        estaEnInicio=false;
-        MueveAPosFinal();
-      }
-      Serial.println("command PARAM_AVANZA ");
-    }if (strcmp((char*)data, PARAM_PARAR) == 0) {
-      state = Iddle;
-      Serial.println("command PARAM_PARAR ");
-    }else if (strcmp((char*)data, PARAM_RUTINA) == 0) {
-      state= Rutina;
-      StartTime = millis();
-      Serial.print("estaEnInicio: ");
-      Serial.println(estaEnInicio);
-       if(!estaEnInicio){
-        MueveAPosInicial();
-      }else{
-        MueveAPosFinal();
-      }
-      Serial.println("command PARAM_RUTINA ");
-    }else if (strcmp((char*)data, PARAM_CALIBRA) == 0) {    
+  if (strcmp((char*)data, PARAM_CALIBRA) == 0) {    
       state = CalibrateStart;
         if(isDebug){
       delay(2000);
       notifyClients("calibrado");
         }
       Serial.println("command PARAM_CALIBRA ");
+      
     }else if (strcmp((char*)data, PARAM_VELMAS) == 0) {    
       velocidad++;
       if(velocidad>15)
@@ -327,37 +241,10 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       notifyClients(String(velocidad));
       Serial.println("command PARAM_VELMAS ");
       Serial.println(velocidad);
-    }else if (strcmp((char*)data, PARAM_VELMENOS) == 0) {    
-      velocidad--;
-      if(velocidad<6)
-      velocidad=6;
-       EEPROM.writeInt(addressVelocity, velocidad); 
-       EEPROM.commit();
-       delay(100);
-      notifyClients(String(velocidad));
-      Serial.println("command PARAM_VELMENOS ");
-      Serial.println(velocidad);
-    }else if (strcmp((char*)data, PARAM_RELAYA) == 0) {
-      digitalWrite(Relay1, !digitalRead(Relay1));
-      Serial.println("command PARAM_RELAYA ");
-    }else if (strcmp((char*)data, PARAM_RELAYB) == 0) {
-      digitalWrite(Relay2, !digitalRead(Relay2));
-      Serial.println("command PARAM_RELAYB ");
-    }
-    else {
+    }else {
       Serial.println("command unknown ");
     }
   }
-}
-
-void MueveAPosInicial() {
-  Serial.println("MueveAPosInicial ");
-
-}
-
-void MueveAPosFinal() {
-  Serial.println("MueveAPosFinal ");
-
 }
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
@@ -370,6 +257,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
       break;
     case WS_EVT_DATA:
+    Serial.printf("WebSocket client #%u data\n", data);
       handleWebSocketMessage(arg, data, len);
       break;
     case WS_EVT_PONG:
@@ -384,6 +272,7 @@ void initWebSocket() {
 }
 
 String processor(const String& var){
+  Serial.print("processor "); 
   Serial.println(var);
   if(var == "VEL"){
     return String(velocidad);
@@ -391,13 +280,7 @@ String processor(const String& var){
   return String();
 }
 
-const char* PARAM_MESSAGE = "channel";
-const char* PARAM_MESSAGE2 = "value";
-
-String value="255";
-String channel="1";
-
-uint32_t interval = 1000/22;
+uint32_t interval = 1000/30;
 uint32_t now=0;
 
 void notFound(AsyncWebServerRequest *request) {
@@ -419,6 +302,7 @@ void WiFiEvent(WiFiEvent_t event)
       Serial.println("ETH Connected");
       break;
     case SYSTEM_EVENT_ETH_GOT_IP:
+    Serial.println("ETH SYSTEM_EVENT_ETH_GOT_IP");
       Serial.print("ETH MAC: ");
       Serial.print(ETH.macAddress());
       Serial.print(", IPv4: ");
@@ -445,13 +329,8 @@ void WiFiEvent(WiFiEvent_t event)
       break;
   }
 }
-// Wifi settings
-// LED settings
 const int clockPin = 4;//D5 esp32
-//CRGB leds[numLeds];
-// Art-Net settings
 ArtnetWifi artnet;
-const int healthUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as 0.
 
 //timer
 unsigned long DELAY_TIME = 0; // 10 sec
@@ -461,7 +340,7 @@ int packetCounter = 0;
 int frameCounter = 0;
 
 // Check if we got all universes
-const int maxUniverses = 10;
+const int maxUniverses = 11;
 bool universesReceived[maxUniverses];
 bool sendFrame = 1;
 int previousDataLength = 0;
@@ -690,7 +569,8 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
     }
 
     if (universe == 11) {
-    dmx.write(i,  data[i ]);
+      dmx.write(i,  data[i ]);
+      
     }
   }
 
@@ -738,7 +618,7 @@ void setup()
 
   WiFi.onEvent(WiFiEvent);
   ETH.begin();
-  ETH.config(IPAddress(192, 168, 0, 100  ),IPAddress(192, 168, 0, 1),IPAddress(255, 255, 255, 0),IPAddress(192, 168, 0, 1),IPAddress(192, 168, 0, 1));
+  ETH.config(IPAddress(192, 168, 1, 100  ),IPAddress(192, 168, 1, 1),IPAddress(255, 255, 255, 0),IPAddress(192, 168, 1, 1),IPAddress(192, 168, 1, 1));
 
 }
 
@@ -759,7 +639,6 @@ void initialize()
   FastLED.addLeds<APA102, 33, clockPin, BGR>(leds, 6 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
   //FastLED.addLeds<APA102, 39, clockPin, BGR>(leds, 7 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
 
-
   FastLED.setBrightness(brightness);
 
   initTest();
@@ -769,39 +648,6 @@ void initialize()
   Serial.print("universes:");
   Serial.println(maxUniverses);
   artnet_connected = true;
-
-//  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-//      request->send(200, "text/plain", "Hello, world");
-//  });
-//
-//  // Send a GET request to <IP>/get?message=<message>
-//  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-//      
-//      if (request->hasParam(PARAM_MESSAGE)) {
-//          channel = request->getParam(PARAM_MESSAGE)->value();
-//      } else {
-//          channel = "No channel sent";
-//      }
-//
-//      if (request->hasParam(PARAM_MESSAGE2)) {
-//          value = request->getParam(PARAM_MESSAGE2)->value();
-//      } else {
-//          value = "No value sent";
-//      }
-//       
-//      request->send(200, "text/plain", "Hello, GET: " + channel +":"+value);
-//  });
-//
-//  // Send a POST request to <IP>/post with a form field message set to <message>
-//  server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request){
-//      String message;
-//      if (request->hasParam(PARAM_MESSAGE, true)) {
-//          message = request->getParam(PARAM_MESSAGE, true)->value();
-//      } else {
-//          message = "No message sent";
-//      }
-//      request->send(200, "text/plain", "Hello, POST: " + message);
-//  });
 
 
 if (!EEPROM.begin(1000)) {
@@ -835,6 +681,15 @@ if (!EEPROM.begin(1000)) {
   server.begin();
 
   dmx.init(512, 2);  
+
+  //se inicializa 
+  //fastled
+  //artnet, ya esta esperando udp
+  //eeprom, ya puede leer cosas guardadas
+  //websocket, ya espera mensajes y eventos
+  //respuesta server, en cuanto hay un request, loadea la pag, inicializa websocket local
+  //empieza server, para esperar requests
+  //dmx, ya esta mandando y espera dmx para cambiar sus valores
 }
 
 void loop()
@@ -844,33 +699,28 @@ void loop()
   if (artnet_connected) {
     artnet.read();
   }
+  
   if (millis()  >= (DELAY_TIME + INTERVAL) && eth_connected) {
     DELAY_TIME = millis(); // finished delay -- single shot, once only
-    Serial.print("frames: ");
-    Serial.print(frameCounter);
-    Serial.print("packets: ");
-    Serial.println(packetCounter);
-    
+//    Serial.print("frames: ");
+//    Serial.print(frameCounter);
+//    Serial.print("packets: ");
+//    Serial.println(packetCounter);
+//    
+//
+//    Serial.print("ETH MAC: ");
+//    Serial.print(ETH.macAddress());
+//    Serial.print(", IPv4: ");
+//    Serial.print(ETH.localIP());
 
-    Serial.print("ETH MAC: ");
-    Serial.print(ETH.macAddress());
-    Serial.print(", IPv4: ");
-    Serial.print(ETH.localIP());
-
-//    artnet.setByte(0, 0);
-//    artnet.setByte(1, frameCounter);
-//    artnet.setByte(2, (byte) (packetCounter & 0xFF));
-//    artnet.setByte(3, (byte) ((packetCounter>>8) & 0xFF));
-//    artnet.write();
-//    frameCounter = 0;
-//    packetCounter = 0;
+notifyClients(String(frameCounter));
+    frameCounter = 0;
+    packetCounter = 0;    
   }
 
-  if (millis() - now >= interval)
-  {
-    now=millis();
-     
-    dmx.update();
-  }
-
+//  if (millis() - now >= interval)
+//  {
+//    now=millis();
+//    dmx.update();
+//  }
 }

@@ -40,7 +40,7 @@ public class OPC
     parent.registerMethod("draw", this);
 
     artnet = new ArtNetClient();
-    artnet.start(localInterface);
+    artnet.start();
   }
 
   // Set the location of a single LED
@@ -153,10 +153,6 @@ public class OPC
     if (enableShowLocations) {
       updatePixels();
     }
-    
-    byte[] data = artnet.readDmxData(0, 0);
-    remoteFPS=(data[1] & 0xFF);
-    remotePackets=((data[3] << 8) + data[2]);
    
   }
 
